@@ -13,6 +13,7 @@ calendar, which displays a popup window. In this popup, the user enters the even
 chooses the time for the alarm to sound. Additionally, there is an optional section for the user to
 schedule a reminder before the alarm, which can be helpful if extra time is needed to commute
 to an event or meeting.
+
 Regarding external libraries required for this project, we plan to use PySimpleGUI and
 PyQt5 for the UI framework and SQL for the database query to store the reminders and its
 attributes. If hosting and connecting the SQL server is too time consuming, a substitute would
@@ -20,7 +21,11 @@ be to use CSV files to store data. For datasets, we will either create our own c
 or use one from Kaggle. Some additional Python libraries that will be used are Pandas,
 Request, and MSSQL. All these libraries mentioned should be sufficient to develop the core
 functionality of both the front and back end of the application.
+
 Team Name: The Alarmists
+
 Members:
+
 ● Nathan Wong (nathan.s.wong@sjsu.edu)
+
 ● Fnu Hasham (fnu.hasham@sjsu.edu)
