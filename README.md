@@ -22,7 +22,7 @@ or use one from Kaggle. Some additional Python libraries that will be used are P
 Request, and MSSQL. All these libraries mentioned should be sufficient to develop the core
 functionality of both the front and back end of the application.
 
-***Members:***
+**Members:**
 
 ● Nathan Wong (nathan.s.wong@sjsu.edu)
 
