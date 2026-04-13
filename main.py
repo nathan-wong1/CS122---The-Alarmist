@@ -1,7 +1,7 @@
-from screen import Screen
+from alarm import AlarmScreen
 
 def create_layout():
-    main_screen = Screen("Alarm")
+    main_screen = AlarmScreen()
     main_screen.initialize_ui()
 
 if __name__ == '__main__':
