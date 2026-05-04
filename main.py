@@ -1,4 +1,4 @@
-from alarm import AlarmScreen
+from alarm_ui import AlarmScreen
 
 def create_layout():
     main_screen = AlarmScreen()
