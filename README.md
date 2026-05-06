@@ -27,13 +27,9 @@ We created an alarm GUI application that incorporates aspects from Google Calend
 
 ### Notes: 
 
-Module winsound only works on Windows operating systems, NOT Mac/Linux
-
-Duplicate alarms can exist
-
-Alarms can be set in the past
-
-Alarms do not have to have descriptions
-   
-There is a very slight delay (10ms nax) when Timer class updates the countdown timer 
+- Module winsound only works on Windows operating systems, NOT Mac/Linux
+- Duplicate alarms can exist
+- Alarms can be set in the past
+- Alarms do not have to have descriptions
+- There is a very slight delay (10ms nax) when Timer class updates the countdown timer 
 
