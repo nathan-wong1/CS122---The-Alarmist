@@ -1,6 +1,7 @@
 import datetime
 import threading
 import winsound
+from pathlib import Path
 import FreeSimpleGUI as gf
 
 class Timer:
@@ -78,11 +79,11 @@ class Timer:
 
     def _stop_alarm_sound(self):
         self._stop_sound.set()
-        winsound.PlaySound(None, winsound.SND_PURGE)
 
     def _sound_loop(self):
+        SOUND_FILE = Path(__file__).parent / "sounds/alarm_sound.wav"
         while not self._stop_sound.is_set():
-            winsound.PlaySound("SystemHand", winsound.SND_ALIAS)
+            winsound.PlaySound(str(SOUND_FILE), winsound.SND_FILENAME)
 
     def _update_display(self, total_seconds):
         h = total_seconds // 3600
