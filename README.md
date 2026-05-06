@@ -31,5 +31,6 @@ We created an alarm GUI application that incorporates aspects from Google Calend
 - Duplicate alarms can exist
 - Alarms can be set in the past
 - Alarms do not have to have descriptions
-- There is a very slight delay (10ms nax) when Timer class updates the countdown timer 
+- There is a very slight delay (10ms nax) when Timer class updates the countdown timer
+- Timers can run concurrently while user is in another view
 
