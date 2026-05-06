@@ -17,6 +17,7 @@ We created an alarm GUI application that incorporates aspects from Google Calend
 3. Open an IDE like Visual Studios or Pycharm (Python 3.12 recommended)
 4. Download the following modules in local terminal:
     - pip install FreeSimpleGUI
+    - pip install PyQt5
 5. Open the main.py file and run the file
    
    OR
@@ -31,6 +32,6 @@ We created an alarm GUI application that incorporates aspects from Google Calend
 - Duplicate alarms can exist
 - Alarms can be set in the past
 - Alarms do not have to have descriptions
-- There is a very slight delay (10ms nax) when Timer class updates the countdown timer
+- There is a very slight delay (10ms max) when Timer class updates the countdown timer
 - Timers can run concurrently while user is in another view
 
