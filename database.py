@@ -44,3 +44,7 @@ class Database:
     def delete_alarm(self, alarm_id):
         with self._connect() as conn:
             conn.execute("DELETE FROM Alarms WHERE id = ?", (alarm_id,))
+
+    def deactivate_alarm(self, alarm_id):
+        with self._connect() as conn:
+            conn.execute("UPDATE Alarms SET is_active = 0 WHERE id = ?", (alarm_id,))

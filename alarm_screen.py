@@ -3,11 +3,8 @@ from timer import Timer
 from database import Database
 from alarm_manager import AlarmManager
 from alarm_config_dialog import AlarmConfigDialog
-from alarm_validator import AlarmValidator
 from stopwatch_controller import StopwatchController
 from calendar_controller import CalendarController
-
-import datetime
 import FreeSimpleGUI as gf
 
 
@@ -120,6 +117,7 @@ class AlarmScreen(Screen):
             if event == gf.TIMEOUT_EVENT:
                 self.stopwatch.tick()
                 self.timer.tick()
+                self.alarms.check_alarms()
 
             elif event in ("-ALARMS-", "-TIMER-", "-STOPWATCH-", "-CALENDAR-"):
                 self.toggle_selection(event)

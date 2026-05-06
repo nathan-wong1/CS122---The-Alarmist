@@ -12,9 +12,9 @@ class AlarmValidator:
     def validate_inputs(date_str, time_str):
         errors = {}
         try:
-            datetime.datetime.strptime(date_str.strip(), "%d/%m/%Y")
+            datetime.datetime.strptime(date_str.strip(), "%m/%d/%Y")
         except ValueError:
-            errors["input_date"] = "⚠ Invalid date (DD/MM/YYYY)"
+            errors["input_date"] = "⚠ Invalid date (MM/DD/YYYY)"
         try:
             datetime.datetime.strptime(time_str.strip(), "%H:%M")
         except ValueError:
