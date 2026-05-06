@@ -1,4 +1,4 @@
-# CS122-The-Alarmist
+# CS122-The Alarmist
 For our team project, we are planning on creating an alarm GUI application, combining
 features from both the mobile alarm app and Google Calendar. Currently, for Google and
 Apple’s Calendar application, there is no official alarm that goes off to remind the user of an
