@@ -19,6 +19,8 @@ class AlarmScreen(Screen):
             [gf.Text("Alarms", justification="left", expand_x=True, font=("Helvetica", 20, "bold"),
                      background_color="black"),
              gf.Button("+", key="add-alarm", font=("Helvetica", 20), button_color=("white", "black"), border_width=0,
+                       mouseover_colors=("gray", "black")),
+             gf.Button("−", key="delete-alarm", font=("Helvetica", 20), button_color=("white", "black"), border_width=0,
                        mouseover_colors=("gray", "black"))],
             [gf.Listbox(values=[], key="-COL-", background_color="#111", text_color="white",
                 font=("Helvetica", 12), expand_x=True, size=(0, 10), no_scrollbar=False,
@@ -67,18 +69,18 @@ class AlarmScreen(Screen):
             ], element_justification="center", expand_x=True, background_color="black")]
         ], key="-VIEW-STOPWATCH-", background_color="black", expand_x=True, visible=False)
 
-        calendar_view = gf.Column([
-            [gf.Text("Calendar", justification="center", expand_x=True, font=("Helvetica", 20, "bold"), background_color="black")],
-            [gf.Column([
-                [gf.Text("Sun", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Mon", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Tue", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Wed", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Thu", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Fri", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold")),
-                 gf.Text("Sat", expand_x=True, justification="center", background_color="#222", font=("Helvetica", 10, "bold"))],
-                *self._build_calendar_rows()
-            ], expand_x=True, background_color="black")]
+
+
+        now = datetime.datetime.now()
+        self._cal_year = now.year
+        self._cal_month = now.month
+
+        calendar_view = calendar_view = gf.Column([
+            [gf.Text("", key="-CAL-MONTH-LABEL-", justification="center", expand_x=True,
+                     font=("Helvetica", 13, "bold"), background_color="black")],
+            [gf.Listbox(values=[], key="-CAL-LIST-", background_color="#111", text_color="white",
+                        font=("Helvetica", 12), expand_x=True, size=(0, 10), no_scrollbar=False,
+                        select_mode=gf.LISTBOX_SELECT_MODE_SINGLE, enable_events=True)],
         ], key="-VIEW-CALENDAR-", background_color="black", expand_x=True, visible=False)
 
         super().__init__("Alarms", layout=[
@@ -116,16 +118,39 @@ class AlarmScreen(Screen):
         entries = [f"{row[2]} {row[3]} - {row[1]}" for row in alarms]
         self.window["-COL-"].update(values=entries)
 
-    def _build_calendar_rows(self):
+    def _build_calendar_rows(self, year=None, month=None):
         now = datetime.datetime.now()
-        cal = calendar.monthcalendar(now.year, now.month)
+        year = year or now.year
+        month = month or now.month
+        cal = calendar.monthcalendar(year, month)
         rows = []
+
+        alarms = self.db.get_alarms() if hasattr(self, 'db') else []
+        alarm_days = set()
+        for row in alarms:
+            try:
+                d = datetime.datetime.strptime(row[2].strip(), "%d/%m/%Y")
+                if d.year == year and d.month == month:
+                    alarm_days.add(d.day)
+            except ValueError:
+                pass
+
         for week in cal:
             row = []
             for day in week:
                 label = str(day) if day != 0 else ""
-                color = "purple" if (day == now.day) else "black"
-                row.append(gf.Text(label, expand_x=True, justification="center", background_color=color, font=("Helvetica", 10), pad=(2, 4)))
+                if day != 0 and day == now.day and year == now.year and month == now.month:
+                    color = "purple"
+                elif day in alarm_days:
+                    color = "#8B0000"  # dark red = has alarm
+                else:
+                    color = "black"
+                row.append(gf.Text(
+                    label, key=f"-CAL-DAY-{day}-" if day != 0 else f"-CAL-EMPTY-{week.index(day)}-{month}-",
+                    expand_x=True, justification="center",
+                    background_color=color, font=("Helvetica", 10),
+                    pad=(2, 4), enable_events=(day != 0)
+                ))
             rows.append(row)
         return rows
 
@@ -137,7 +162,6 @@ class AlarmScreen(Screen):
         s = total_seconds % 60
         return f"{h:02}:{m:02}:{s:02}.{cs:02}"
 
-    # --- Main loop ---
 
     def initialize_ui(self):
         while True:
@@ -160,9 +184,30 @@ class AlarmScreen(Screen):
                     "-STOPWATCH-": "-VIEW-STOPWATCH-",
                     "-CALENDAR-":  "-VIEW-CALENDAR-",
                 }[event])
+                if event == "-CALENDAR-":
+                    self.refresh_calendar_list()
+                    self._show_calendar_popup()
 
             elif event == "add-alarm":
                 self.config()
+
+            elif event == "delete-alarm":
+                selected = values["-COL-"]
+                if selected:
+                    idx = self.window["-COL-"].get_list_values().index(selected[0])
+                    alarm_id = self._alarm_ids[idx]
+                    confirm = gf.popup_yes_no(
+                        "Delete this alarm?",
+                        title="Confirm Delete",
+                        background_color="black",
+                        text_color="white",
+                        button_color=("white", "purple"),
+                        font=("Helvetica", 12),
+                        keep_on_top=True
+                    )
+                    if confirm == "Yes":
+                        self.db.delete_alarm(alarm_id)
+                        self.refresh_alarms()
 
             elif event == "-SW-START-":  self.stopwatch_running = True
             elif event == "-SW-STOP-":   self.stopwatch_running = False
@@ -274,3 +319,186 @@ class AlarmScreen(Screen):
             errors["input_time"] = "⚠ Invalid time (HH:MM)"
 
         return errors
+
+    def refresh_calendar_list(self):
+        now = datetime.datetime.now()
+        label = now.strftime("%B %Y")
+        self.window["-CAL-MONTH-LABEL-"].update(label)
+
+        alarms = self.db.get_alarms()
+        entries = []
+        for row in alarms:
+            try:
+                d = datetime.datetime.strptime(row[2].strip(), "%d/%m/%Y")
+                if d.year == now.year and d.month == now.month:
+                    entries.append(f"{row[2]} {row[3]} - {row[1]}")
+            except ValueError:
+                pass
+
+        if not entries:
+            entries = ["No alarms this month."]
+
+        self.window["-CAL-LIST-"].update(values=entries)
+
+    def _refresh_calendar(self):
+        month_name = datetime.date(self._cal_year, self._cal_month, 1).strftime("%B %Y")
+        self.window["-CAL-MONTH-LABEL-"].update(month_name)
+
+        alarms = self.db.get_alarms()
+        alarm_days = set()
+        for row in alarms:
+            try:
+                d = datetime.datetime.strptime(row[2].strip(), "%d/%m/%Y")
+                if d.year == self._cal_year and d.month == self._cal_month:
+                    alarm_days.add(d.day)
+            except ValueError:
+                pass
+
+        now = datetime.datetime.now()
+        cal = calendar.monthcalendar(self._cal_year, self._cal_month)
+
+        rows = []
+        for week in cal:
+            row = []
+            for day in week:
+                label = str(day) if day != 0 else ""
+                if day != 0 and day == now.day and self._cal_year == now.year and self._cal_month == now.month:
+                    color = "purple"
+                elif day in alarm_days:
+                    color = "#5a0000"
+                else:
+                    color = "black"
+                row.append(gf.Text(
+                    label, expand_x=True, justification="center",
+                    background_color=color, font=("Helvetica", 10), pad=(2, 4)
+                ))
+            rows.append(row)
+
+        header = [[
+            gf.Text("Sun", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Mon", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Tue", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Wed", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Thu", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Fri", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+            gf.Text("Sat", expand_x=True, justification="center", background_color="#222",
+                    font=("Helvetica", 10, "bold")),
+        ]]
+        self.window["-CAL-GRID-"].widget.destroy()  # remove old grid
+        self._show_calendar_popup()
+
+    def _show_calendar_popup(self, year=None, month=None):
+        now = datetime.datetime.now()
+        year = year or self._cal_year
+        month = month or self._cal_month
+
+        def build_layout(y, m):
+            alarms = self.db.get_alarms()
+            alarm_days = {}
+            for row in alarms:
+                try:
+                    d = datetime.datetime.strptime(row[2].strip(), "%d/%m/%Y")
+                    if d.year == y and d.month == m:
+                        alarm_days.setdefault(d.day, []).append(row)
+                except ValueError:
+                    pass
+
+            cal = calendar.monthcalendar(y, m)
+            month_label = datetime.date(y, m, 1).strftime("%B %Y")
+
+            header_row = [[
+                gf.Button("◀", key="-CP-PREV-", button_color=("white", "black"), font=("Helvetica", 12),
+                          border_width=0),
+                gf.Text(month_label, justification="center", expand_x=True,
+                        font=("Helvetica", 14, "bold"), background_color="black"),
+                gf.Button("▶", key="-CP-NEXT-", button_color=("white", "black"), font=("Helvetica", 12),
+                          border_width=0),
+            ]]
+
+            day_headers = [[
+                gf.Text(d, expand_x=True, justification="center", background_color="#222",
+                        font=("Helvetica", 10, "bold"), size=(4, 1))
+                for d in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+            ]]
+
+            day_rows = []
+            for week in cal:
+                row = []
+                for day in week:
+                    if day == 0:
+                        row.append(gf.Text("", expand_x=True, size=(4, 2),
+                                           background_color="black", font=("Helvetica", 10)))
+                    else:
+                        is_today = (day == now.day and y == now.year and m == now.month)
+                        has_alarm = day in alarm_days
+                        bg = "purple" if is_today else ("#5a0000" if has_alarm else "#1a1a1a")
+                        indicator = "●" if has_alarm else ""
+                        row.append(gf.Button(
+                            f"{day}\n{indicator}", key=f"-CP-DAY-{day}-",
+                            button_color=("white", bg),
+                            font=("Helvetica", 9), size=(4, 2), border_width=0,
+                            mouseover_colors=("white", "#333")
+                        ))
+                day_rows.append(row)
+
+            legend = [[
+                gf.Text("■", text_color="purple", background_color="black", font=("Helvetica", 9)),
+                gf.Text("Today", background_color="black", font=("Helvetica", 9), text_color="gray"),
+                gf.Text("  ■", text_color="#5a0000", background_color="black", font=("Helvetica", 9)),
+                gf.Text("Has alarm", background_color="black", font=("Helvetica", 9), text_color="gray"),
+            ]]
+
+            return header_row + day_headers + day_rows + legend, alarm_days
+
+        layout, alarm_days = build_layout(year, month)
+        popup = gf.Window("Calendar", layout, modal=True, background_color="black",
+                          keep_on_top=True, finalize=True)
+
+        while True:
+            ev, _ = popup.read()
+            if ev == gf.WIN_CLOSED:
+                break
+            elif ev == "-CP-PREV-":
+                month -= 1
+                if month < 1:
+                    month = 12
+                    year -= 1
+                popup.close()
+                self._cal_year, self._cal_month = year, month
+                self._show_calendar_popup(year, month)
+                return
+            elif ev == "-CP-NEXT-":
+                month += 1
+                if month > 12:
+                    month = 1
+                    year += 1
+                popup.close()
+                self._cal_year, self._cal_month = year, month
+                self._show_calendar_popup(year, month)
+                return
+            elif ev and ev.startswith("-CP-DAY-"):
+                day = int(ev.replace("-CP-DAY-", "").replace("-", ""))
+                if day in alarm_days:
+                    lines = "\n\n".join(
+                        f"🔔 {r[1]}  |  {r[3]}\n   {r[4] or 'No description'}"
+                        for r in alarm_days[day]
+                    )
+                    gf.popup(
+                        f"Alarms on {day:02}/{month:02}/{year}:\n\n{lines}",
+                        title="Alarms", background_color="black", text_color="white",
+                        button_color=("white", "purple"), font=("Helvetica", 11), keep_on_top=True
+                    )
+                else:
+                    gf.popup(
+                        f"No alarms on {day:02}/{month:02}/{year}.",
+                        title="Alarms", background_color="black", text_color="white",
+                        button_color=("white", "purple"), font=("Helvetica", 11), keep_on_top=True
+                    )
+
+        popup.close()
