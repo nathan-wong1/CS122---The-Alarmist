@@ -1,7 +1,6 @@
 import sqlite3
 from datetime import datetime
 
-
 class Database:
     def __init__(self, db_path="alarmist.db"):
         self.db_path = db_path

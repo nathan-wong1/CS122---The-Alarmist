@@ -12,6 +12,7 @@ class Screen:
 
         with open(icon, "rb") as f:
             self.icon = base64.b64encode(f.read())
+
         self.size = size
         self.title = title
         self.window = gf.Window(self.title, self.layout, size=self.size, icon=self.icon, background_color="black", finalize=True)
